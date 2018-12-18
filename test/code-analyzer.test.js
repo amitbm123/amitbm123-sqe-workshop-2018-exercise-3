@@ -1,9 +1,9 @@
 import assert from 'assert';
-import {parseCode, setArgs} from '../src/js/code-analyzer';
-import { stringCode} from '../src/js/code-analyzer';
+import {parseCode} from '../src/js/code-analyzer';
+import {arrayTable, stringCode} from '../src/js/code-analyzer';
 import {setStringCode} from '../src/js/code-analyzer';
 import {parseb} from '../src/js/code-analyzer';
-import {clean,getsubstring} from '../src/js/code-analyzer';
+import {cleanTable,getStringTable} from '../src/js/code-analyzer';
 
 it('is parsing an empty function correctly', () => {
     assert.equal(
@@ -17,379 +17,128 @@ it('setStringCode', () => {
     assert.equal(stringCode,'hello');
 });
 
-
-it('check if',()=>{
-    setStringCode('function foo(){\nif(1==1)\nreturn 1;\nif(1==2)\nreturn 1;\n}');
-    parseb(parseCode('function foo(){\nif(1==1)\nreturn 1;\nif(1==2)\nreturn 1;\n}').body);
-    assert.equal(getsubstring(), 'function foo(){\n<mark class="green" id="green"> if(( 1 == 1 ))</mark> \nreturn 1;\n<mark class="red" id="red"> if(( 1 == 2 ))</mark> \nreturn 1;\n}\n');
-    clean();
+it('clean table', () => {
+    let x=[2,3,4];
+    assert.equal(x[0],'2');
+    assert.equal(x[1],'3');
+    assert.equal(x[2],'4');
+    cleanTable(x);
+    assert.equal(x,'');
 });
 
-it('check argument',()=>{
-    setStringCode('function foo(x,y){\nif(x==1)\nreturn 1;\nif(y==2)\nreturn 1;\n}');
-    setArgs('1 2');
-    parseb(parseCode('function foo(x,y){\nif(x==1)\nreturn 1;\nif(y==2)\nreturn 1;\n}').body);
-    assert.equal(getsubstring(), 'function foo(x,y){\n<mark class="green" id="green"> if(( x == 1 ))</mark> \nreturn 1;\n<mark class="green" id="green"> if(( y == 2 ))</mark> \nreturn 1;\n}\n');
-    clean();
+it('while statement getStringTable', () => {
+    setStringCode('while ( low <= high ){}');
+    parseb(parseCode('while ( low <= high ){}').body);
+    assert.equal(tostring(arrayTable[0]),'{line: 1, type: WhileStatement, name: , condition: low <= high, value: }');
+    assert.equal(getStringTable(),'<tr><td>1</td><td>WhileStatement</td><td></td><td>low <= high</td><td></td></tr>');
+    cleanTable(arrayTable);
 });
 
-it('check array argument',()=>{
-    setStringCode('function foo(x){\nif(x[0]==1)\nreturn 1;\nif(x[1]==2)\nreturn 1;\n}');
-    setArgs('[1,2]');
-    parseb(parseCode('function foo(x){\nif(x[0]==1)\nreturn 1;\nif(x[1]==2)\nreturn 1;\n}').body);
-    assert.equal(getsubstring(), 'function foo(x){\n<mark class="green" id="green"> if(( x[0] == 1 ))</mark> \nreturn 1;\n<mark class="green" id="green"> if(( x[1] == 2 ))</mark> \nreturn 1;\n}\n');
-    clean();
+it('for statement VariableDeclaration', () => {
+    cleanTable(arrayTable);
+    setStringCode('for ( let i=0; i<10; i++ ){let x = 1}');
+    parseb(parseCode('for ( let i=0; i<10; i++ ){let x = 1}').body);
+    assert.equal(tostring(arrayTable[0]),'{line: 1, type: ForStatement, name: , condition: let i=0;i<10;i++, value: }');
+    assert.equal(tostring(arrayTable[1]),'{line: 1, type: VariableDeclaration, name: x, condition: , value: 1}');
 });
 
-it('check global',()=>{
-    setStringCode('let x=0;\nfunction foo(y){\nif(y==x)\nreturn 1;\n}');
-    setArgs('0');
-    parseb(parseCode('let x=0;\nfunction foo(y){\nif(y==x)\nreturn 1;\n}').body);
-    assert.equal(getsubstring(),  'let x=0;\nfunction foo(y){\n<mark class="green" id="green"> if(( y == x ))</mark> \nreturn 1;\n}\n');
-    clean();
+it('IfStatement  AssignmentExpression', () => {
+    cleanTable(arrayTable);
+    setStringCode('if(x==1)\nI = I+1;\nelse if (x==0)\nI=I-1;\nelse\nI=0;');
+    parseb(parseCode('if(x==1)\nI = I+1;\nelse if (x==0)\nI=I-1;\nelse\nI=0;').body);
+    assert.equal(tostring(arrayTable[0]),'{line: 1, type: IfStatement, name: , condition: x==1, value: }');
+    assert.equal(tostring(arrayTable[1]),'{line: 2, type: AssignmentExpression, name: I, condition: , value: I+1}');
+    assert.equal(tostring(arrayTable[2]),'{line: 3, type: ElseIfStatement, name: , condition: x==0, value: }');
+    assert.equal(tostring(arrayTable[3]),'{line: 4, type: AssignmentExpression, name: I, condition: , value: I-1}');
+    assert.equal(tostring(arrayTable[4]),'{line: 6, type: AssignmentExpression, name: I, condition: , value: 0}');
 });
 
-it('check global',()=>{
-    setStringCode('function foo(x, y){\nlet a = x;\nlet b = a;\nb = b+1;\nif (b == y) {\nreturn 1;\n} \n}\n');
-    setArgs('1 2');
-    parseb(parseCode('function foo(x, y){\nlet a = x;\nlet b = a;\nb = b+1;\nif (b == y) {\nreturn 1;\n} \n}\n').body);
-    assert.equal(getsubstring(),'function foo(x, y){\n<mark class="green" id="green"> if(( ( x + 1 ) == y )){ </mark> \nreturn 1;\n}\n}\n');
-    clean();
+it('ReturnStatement FunctionDeclaration identifier', () => {
+    cleanTable(arrayTable);
+    setStringCode('function binarySearch(X, V, n){\nreturn -1;\n}');
+    parseb(parseCode('function binarySearch(X, V, n){\nreturn -1;\n}').body);
+    assert.equal(tostring(arrayTable[0]),'{line: 1, type: FunctionDeclaration, name: binarySearch, condition: , value: }');
+    assert.equal(tostring(arrayTable[1]),'{line: 1, type: VariableDeclaration, name: X, condition: , value: }');
+    assert.equal(tostring(arrayTable[2]),'{line: 1, type: VariableDeclaration, name: V, condition: , value: }');
+    assert.equal(tostring(arrayTable[3]),'{line: 1, type: VariableDeclaration, name: n, condition: , value: }');
+    assert.equal(tostring(arrayTable[4]),'{line: 2, type: ReturnStatement, name: , condition: , value: -1}');
 });
-
-it('check same parameter as global',()=>{
-    setStringCode('let x=0;\nfunction foo(x){\nif(x==1)\nreturn x;\n}');
-    setArgs('1');
-    parseb(parseCode('let x=0;\nfunction foo(x){\nif(x==1)\nreturn x;\n}').body);
-    assert.equal(getsubstring(),'let x=0;\nfunction foo(x){\n<mark class="green" id="green"> if(( x == 1 ))</mark> \nreturn x;\n}\n');
-    clean();
+it('VariableDeclaration', () => {
+    cleanTable(arrayTable);
+    setStringCode('let mid, high, low;');
+    parseb(parseCode('let mid, high, low;').body);
+    assert.equal(tostring(arrayTable[0]),'{line: 1, type: VariableDeclaration, name: mid, condition: , value: }');
+    assert.equal(tostring(arrayTable[1]),'{line: 1, type: VariableDeclaration, name: high, condition: , value: }');
+    assert.equal(tostring(arrayTable[2]),'{line: 1, type: VariableDeclaration, name: low, condition: , value: }');
 });
-
-it('check same parameter as global',()=>{
-    setStringCode('let x=0;\nfunction foo(x){\nif(x==1)\nreturn x;\n}');
-    setArgs('1');
-    parseb(parseCode('let x=0;\nfunction foo(x){\nif(x==1)\nreturn x;\n}').body);
-    assert.equal(getsubstring(),'let x=0;\nfunction foo(x){\n<mark class="green" id="green"> if(( x == 1 ))</mark> \nreturn x;\n}\n');
-    clean();
-});
-
-it('check array rec',()=>{
-    setStringCode('function foo(x){\nif(x[1]==2)\nreturn 1;\n}');
-    setArgs('[[1],2]');
-    parseb(parseCode('function foo(x){\nif(x[1]==2)\nreturn 1;\n}').body);
-    assert.equal(getsubstring(), 'function foo(x){\n<mark class="green" id="green"> if(( x[1] == 2 ))</mark> \nreturn 1;\n}\n');
-    clean();
-});
-
-it('check while',()=>{
-    setStringCode('function foo(x){\nwhile(true){\nx=x+1;\n}\n}');
-    setArgs('1');
-    parseb(parseCode('function foo(x){\nwhile(true){\nx=x+1;\n}\n}').body);
-    assert.equal(getsubstring(), 'function foo(x){\nwhile(true){\nx = ( x + 1 );\n}\n}\n');
-    clean();
-});
-
-it('check function after function',()=>{
-    setStringCode('function foo(){\n}\nfunction foo(){\n}');
-    setArgs('');
-    parseb(parseCode('function foo(){\n}\nfunction foo(){\n}').body);
-    assert.equal(getsubstring(), 'function foo(){\n}\nfunction foo(){\n}\n');
-    clean();
-});
-
-it('check outside function- let and if',()=>{
-    setStringCode('let x;\nx=0;\nif(x==0){\n}\n');
-    setArgs('');
-    parseb(parseCode('let x;\nx=0;\nif(x==0){\n}\n').body);
-    assert.equal(getsubstring(), 'let x;\nx = 0;\nif(( 0 == 0 )){\n}\n');
-    clean();
-});
-
-it('check outside function while',()=>{
-    setStringCode('let x=0;\nwhile(true){\nx=x+1;\n}\n');
-    setArgs('');
-    parseb(parseCode('let x=0;\nwhile(true){\nx=x+1;\n}\n').body);
-    assert.equal(getsubstring(), 'let x=0;\nwhile(true){\nx = x+1;\n}\n');
-    clean();
-});
-
-it('check outside function while not blockstatemenr',()=>{
-    setStringCode('let x=0;\nwhile(true)\nx=x+1;');
-    setArgs('');
-    parseb(parseCode('let x=0;\nwhile(true)\nx=x+1;').body);
-    assert.equal(getsubstring(), 'let x=0;\nwhile(true)\nx = x+1;\n');
-    clean();
+it('for no block', () => {
+    cleanTable(arrayTable);
+    setStringCode('for (let I=0; I<10; I++)\nx=x+1;');
+    parseb(parseCode('for (let I=0; I<10; I++)\nx=x+1;').body);
+    assert.equal(tostring(arrayTable[0]),'{line: 1, type: ForStatement, name: , condition: let I=0;I<10;I++, value: }');
+    assert.equal(tostring(arrayTable[1]),'{line: 2, type: AssignmentExpression, name: x, condition: , value: x+1}');
 });
 
 
-it('check outside function if not blockstatemenr',()=>{
-    setStringCode('let x=0;\nif(x==0)\nx=x+1;');
-    setArgs('');
-    parseb(parseCode('let x=0;\nif(x==0)\nx=x+1;').body);
-    assert.equal(getsubstring(), 'let x=0;\nif(( 0 == 0 ))\nx = x+1;\n');
-    clean();
+it('else with block', () => {
+    cleanTable(arrayTable);
+    setStringCode('if(x==0)\n x=x+1;\nelse if(x==1){\nx=x+1;\nx=x+1;\n}');
+    parseb(parseCode('if(x==0)\n x=x+1;\nelse if(x==1){\nx=x+1;\nx=x+1;\n}').body);
+    assert.equal(tostring(arrayTable[0]),'{line: 1, type: IfStatement, name: , condition: x==0, value: }');
+    assert.equal(tostring(arrayTable[1]),'{line: 2, type: AssignmentExpression, name: x, condition: , value: x+1}');
+    assert.equal(tostring(arrayTable[2]),'{line: 3, type: ElseIfStatement, name: , condition: x==1, value: }');
+    assert.equal(tostring(arrayTable[3]),'{line: 4, type: AssignmentExpression, name: x, condition: , value: x+1}');
+    assert.equal(tostring(arrayTable[4]),'{line: 5, type: AssignmentExpression, name: x, condition: , value: x+1}');
 });
 
-it('check outside function else not blockstatemenr',()=>{
-    setStringCode('let x=0;\nif(x==0){\nx=x+1;\n}\nelse\nx=x+1;\n');
-    setArgs('');
-    parseb(parseCode('let x=0;\nif(x==0){\nx=x+1;\n}\nelse\nx=x+1;\n').body);
-    assert.equal(getsubstring(), 'let x=0;\nif(( 0 == 0 )){\nx = x+1;\n}\nelse\nx = x+1;\n');
-    clean();
+it('while without block', () => {
+    cleanTable(arrayTable);
+    setStringCode('while (I <10)\nI=I+1;');
+    parseb(parseCode('while (I <10)\nI=I+1;').body);
+    assert.equal(tostring(arrayTable[0]),'{line: 1, type: WhileStatement, name: , condition: I <10, value: }');
+    assert.equal(tostring(arrayTable[1]),'{line: 2, type: AssignmentExpression, name: I, condition: , value: I+1}');
 });
 
-it('check outside function else',()=>{
-    setStringCode('let x=0;\nif(x==0){\nx=x+1;\n}\nelse{\nx=x+1;\n}\n');
-    setArgs('');
-    parseb(parseCode('let x=0;\nif(x==0){\nx=x+1;\n}\nelse{\nx=x+1;\n}\n').body);
-    assert.equal(getsubstring(),'let x=0;\nif(( 0 == 0 )){\nx = x+1;\n}\nelse{\nx = x+1;\n}\n');
-    clean();
+it('elseif twice', () => {
+    cleanTable(arrayTable);
+    setStringCode('if(x==0)\nx=0;\nelse if(false)\nx=-1;\nelse if(true)\nx=2;');
+    parseb(parseCode('if(x==0)\nx=0;\nelse if(false)\nx=-1;\nelse if(true)\nx=2;').body);
+    assert.equal(tostring(arrayTable[0]),'{line: 1, type: IfStatement, name: , condition: x==0, value: }');
+    assert.equal(tostring(arrayTable[1]),'{line: 2, type: AssignmentExpression, name: x, condition: , value: 0}');
+    assert.equal(tostring(arrayTable[2]),'{line: 3, type: ElseIfStatement, name: , condition: false, value: }');
+    assert.equal(tostring(arrayTable[3]),'{line: 4, type: AssignmentExpression, name: x, condition: , value: -1}');
+    assert.equal(tostring(arrayTable[4]),'{line: 5, type: ElseIfStatement, name: , condition: true, value: }');
+    assert.equal(tostring(arrayTable[5]),'{line: 6, type: AssignmentExpression, name: x, condition: , value: 2}');
 });
 
-it('check few globals',()=>{
-    setStringCode('let y=1;\n' +
-        'let x=0;\n' +
-        'x=x+y;');
-    setArgs('');
-    parseb(parseCode('let y=1;\n' +
-        'let x=0;\n' +
-        'x=x+y;').body);
-    assert.equal(getsubstring(),'let y=1;\nlet x=0;\nx = x+y;\n');
-    clean();
+it('if block else ', () => {
+    cleanTable(arrayTable);
+    setStringCode('if(true){\nx=x+1;\nx=x+1;\n}\nelse\nx=x-1;');
+    parseb(parseCode('if(true){\nx=x+1;\nx=x+1;\n}\nelse\nx=x-1;').body);
+    assert.equal(tostring(arrayTable[0]),'{line: 1, type: IfStatement, name: , condition: true, value: }');
+    assert.equal(tostring(arrayTable[1]),'{line: 2, type: AssignmentExpression, name: x, condition: , value: x+1}');
+    assert.equal(tostring(arrayTable[2]),'{line: 3, type: AssignmentExpression, name: x, condition: , value: x+1}');
+    assert.equal(tostring(arrayTable[3]),'{line: 6, type: AssignmentExpression, name: x, condition: , value: x-1}');
 });
 
-
-it('check let array',()=>{
-    setStringCode('function foo(x){\n' +
-        'let x;\n' +
-        'x=0;\n' +
-        'let y = [1,2];\n' +
-        'if(y[0]==1)\n' +
-        'x=x+1\n' +
-        '}');
-    setArgs('');
-    parseb(parseCode('function foo(x){\n' +
-        'let x;\n' +
-        'x=0;\n' +
-        'let y = [1,2];\n' +
-        'if(y[0]==1)\n' +
-        'x=x+1\n' +
-        '}').body);
-    assert.equal(getsubstring(),'function foo(x){\n<mark class="green" id="green"> if(( 1 == 1 ))</mark> \n}\n');
-    clean();
+it('if without else', () => {
+    cleanTable(arrayTable);
+    setStringCode('if (x==0)\nx=1;');
+    parseb(parseCode('if (x==0)\nx=1;').body);
+    assert.equal(tostring(arrayTable[0]),'{line: 1, type: IfStatement, name: , condition: x==0, value: }');
+    assert.equal(tostring(arrayTable[1]),'{line: 2, type: AssignmentExpression, name: x, condition: , value: 1}');
 });
 
 
-it('check let array',()=>{
-    setStringCode('function foo(x){\n' +
-        'let a=0;\n' +
-        'let y = x[a];\n' +
-        'if(y==1)\n' +
-        'return 1;\n' +
-        '}');
-    setArgs('[1,2]');
-    parseb(parseCode('function foo(x){\n' +
-        'let a=0;\n' +
-        'let y = x[a];\n' +
-        'if(y==1)\n' +
-        'return 1;\n' +
-        '}').body);
-    assert.equal(getsubstring(),'function foo(x){\n<mark class="green" id="green"> if(( x[0] == 1 ))</mark> \nreturn 1;\n}\n');
-    clean();
-});
-
-it('check let array globals',()=>{
-    setStringCode('function foo(x,y){\n' +
-        'let a=x[y];\n' +
-        'if(a==2)\n' +
-        'return 1;\n' +
-        '}');
-    setArgs('[1,2] 1');
-    parseb(parseCode('function foo(x,y){\n' +
-        'let a=x[y];\n' +
-        'if(a==2)\n' +
-        'return 1;\n' +
-        '}').body);
-    assert.equal(getsubstring(),'function foo(x,y){\n<mark class="green" id="green"> if(( x[y] == 2 ))</mark> \nreturn 1;\n}\n');
-    clean();
-});
-
-it('check let array globals',()=>{
-    setStringCode('function foo(x,y){\n' +
-        'let a=x[y];\n' +
-        'if(a==2)\n' +
-        'return 1;\n' +
-        '}');
-    setArgs('[1,2] 1');
-    parseb(parseCode('function foo(x,y){\n' +
-        'let a=x[y];\n' +
-        'if(a==2)\n' +
-        'return 1;\n' +
-        '}').body);
-    assert.equal(getsubstring(),'function foo(x,y){\n<mark class="green" id="green"> if(( x[y] == 2 ))</mark> \nreturn 1;\n}\n');
-    clean();
-});
-
-it('check let array globals',()=>{
-    setStringCode('function foo(x,y){\n' +
-        'if(true)\n' +
-        'return 1;\n' +
-        'else if(false)\n' +
-        'return 2;\n' +
-        '}');
-    setArgs('2 3');
-    parseb(parseCode('function foo(x,y){\n' +
-        'if(true)\n' +
-        'return 1;\n' +
-        'else if(false)\n' +
-        'return 2;\n' +
-        '}').body);
-    assert.equal(getsubstring(), 'function foo(x,y){\n<mark class="green" id="green"> if(true)</mark> \nreturn 1;\n<mark class="red" id="red"> else if(false)</mark> \nreturn 2;\n}\n');
-    clean();
-});
-
-
-it('check let array globals',()=>{
-    setStringCode('function foo(x){\n' +
-        'let a=[1,2];\n' +
-        'let y = a[x];\n' +
-        'if(y==1)\n' +
-        'return 1;\n' +
-        '}');
-    setArgs('0');
-    parseb(parseCode('function foo(x){\n' +
-        'let a=[1,2];\n' +
-        'let y = a[x];\n' +
-        'if(y==1)\n' +
-        'return 1;\n' +
-        '}').body);
-    assert.equal(getsubstring(),'function foo(x){\n<mark class="green" id="green"> if(( a[x] == 1 ))</mark> \nreturn 1;\n}\n');
-    clean();
-});
-
-
-it('check else if ',()=>{
-    setStringCode('function foo(y){\n' +
-        'if(y==1)\n' +
-        'return 1;\n' +
-        'else if(y==2){\n' +
-        'return 1;\n' +
-        '}\n' +
-        '}');
-    setArgs('2');
-    parseb(parseCode('function foo(y){\n' +
-        'if(y==1)\n' +
-        'return 1;\n' +
-        'else if(y==2){\n' +
-        'return 1;\n' +
-        '}\n' +
-        '}').body);
-    assert.equal(getsubstring(),'function foo(y){\n<mark class="red" id="red"> if(( y == 1 ))</mark> \nreturn 1;\n<mark class="green" id="green"> else if(( y == 2 )){ </mark> \nreturn 1;\n}\n}\n');
-    clean();
+it('x++', () => {
+    cleanTable(arrayTable);
+    setStringCode('x++;');
+    parseb(parseCode('x++;').body);
+    assert.equal(tostring(arrayTable[0]),'{line: 1, type: AssignmentExpression, name: x, condition: , value: x++}');
 });
 
 
 
-it('check while without blockstatement ',()=>{
-    setStringCode('function foo(){\n' +
-        'while(true)\n' +
-        'return 1;\n' +
-        '}');
-    setArgs('');
-    parseb(parseCode('function foo(){\n' +
-        'while(true)\n' +
-        'return 1;\n' +
-        '}').body);
-    assert.equal(getsubstring(),'function foo(){\nwhile(true)\nreturn 1;\n}\n');
-    clean();
-});
-
-
-it('check while blockstatement ',()=>{
-    setStringCode('function foo(x,y){\nif(y==1)\nreturn 1;\nelse{\nreturn 1;\n}\nif(x==1)\nreturn 1;\n' +
-        'else\n' +
-        'return 1;\n' +
-        '}');
-    setArgs('1 1');
-    parseb(parseCode('function foo(x,y){\n' +
-        'if(y==1)\n' +
-        'return 1;\n' +
-        'else{\n' +
-        'return 1;\n' +
-        '}\n' +
-        'if(x==1)\n' +
-        'return 1;\n' +
-        'else\n' +
-        'return 1;\n' +
-        '}').body);
-    assert.equal(getsubstring(), 'function foo(x,y){\n<mark class="green" id="green"> if(( y == 1 ))</mark> \nreturn 1;\nelse{\nreturn 1;\n}\n<mark class="green" id="green"> if(( x == 1 ))</mark> \nreturn 1;\nelse\nreturn 1;\n}\n');
-    clean();
-});
-
-
-it('check local assingment array',()=>{
-    setStringCode('function foo(){\n' +
-        'let a;\n' +
-        'a = [1,2];\n' +
-        'if(a[0]==1)\n' +
-        'return 1;\n' +
-        '\n' +
-        '}');
-    setArgs('');
-    parseb(parseCode('function foo(){\n' +
-        'let a;\n' +
-        'a = [1,2];\n' +
-        'if(a[0]==1)\n' +
-        'return 1;\n' +
-        '\n' +
-        '}').body);
-    assert.equal(getsubstring(), 'function foo(){\n<mark class="green" id="green"> if(( 1 == 1 ))</mark> \nreturn 1;\n}\n');
-    clean();
-});
-
-
-it('check local assingment array',()=>{
-    setStringCode('function foo(x){\n' +
-        'x = [1,2];\n' +
-        'if(x[0]==1)\n' +
-        'return 1;\n' +
-        '}');
-    setArgs('0');
-    parseb(parseCode('function foo(x){\n' +
-        'x = [1,2];\n' +
-        'if(x[0]==1)\n' +
-        'return 1;\n' +
-        '}').body);
-    assert.equal(getsubstring(), 'function foo(x){\nx = [1,2];\n<mark class="green" id="green"> if(( x[0] == 1 ))</mark> \nreturn 1;\n}\n');
-    clean();
-});
-
-
-it('check global assingment ',()=>{
-    setStringCode('function foo(x,y,z){\n' +
-        'z = 1+1;\n' +
-        'if(z==2)\n' +
-        'return 1;\n' +
-        '}');
-    setArgs('1 2 3');
-    parseb(parseCode('function foo(x,y,z){\n' +
-        'z = 1+1;\n' +
-        'if(z==2)\n' +
-        'return 1;\n' +
-        '}').body);
-    assert.equal(getsubstring(), 'function foo(x,y,z){\nz = ( 1 + 1 );\n<mark class="green" id="green"> if(( z == 2 ))</mark> \nreturn 1;\n}\n');
-    clean();
-});
-
-
-it('check global array ',()=>{
-    setStringCode('let x = [1,2];\n' +
-        'let y = x[0];\n' +
-        'if(y==1){}\n');
-    setArgs('1 2 3');
-    parseb(parseCode('let x = [1,2];\n' +
-        'let y = x[0];\n' +
-        'if(y==1){}\n').body);
-    assert.equal(getsubstring(), 'let x=[1,2];\nlet y=0;\nif(( 0 == 1 )){\n}\n');
-    clean();
-});
+function tostring(arr){
+    return '{line: '+arr.line+', type: '+arr.type+', name: '+arr.name+', condition: '+arr.condition+', value: '+arr.value+'}';
+}
