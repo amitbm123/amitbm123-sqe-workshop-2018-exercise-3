@@ -35,9 +35,10 @@ function globalIsParam(i){
     for (let j = 0; j < globals.length; j++) {
         if (params[i] === globals[j].name) {
             globals[j].val = argument[i];
-            flag = false;
+            return false;
         }
     }
+    return true;
 }
 function boundParams(){
     let flag=true;
@@ -45,7 +46,7 @@ function boundParams(){
         if (argument[i].charAt(0) === '[' && argument[i].charAt((argument[i].length - 1)) === ']') {
             arrayRec(argument[i], params[i]);
         }
-        globalIsParam(i);
+        flag=globalIsParam(i);
         if (flag === true) {
             globals.push({name: params[i], val: argument[i]});
         }

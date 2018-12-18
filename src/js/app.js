@@ -3,7 +3,7 @@ import {parseCode} from './code-analyzer';
 //import {arrayTable} from './code-analyzer';
 import {parseb} from './code-analyzer';
 //import {cleanTable} from './code-analyzer';
-import {getStringTable,setStringCode,setArgs, getvars,getsubstring, getglobals} from './code-analyzer';
+import {setStringCode,setArgs,getsubstring} from './code-analyzer';
 
 
 $(document).ready(function () {
@@ -15,9 +15,5 @@ $(document).ready(function () {
         let parsedCode = parseCode(stringCode);
         parseb(parsedCode.body);
         $('#parsedCodeOut').html(getsubstring());
-        //let table=getStringTable();
-        // $('#parsedCode').val(JSON.stringify(parsedCode, null, 2));
-        // $('#parseTable').append(table);
-        //  cleanTable(arrayTable);
     });
 });
