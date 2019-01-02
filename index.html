@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
 
     <style>
+        cy {
+            width: 300px;
+            height: 300px;
+            display: block;
+        }
         table {
             width: 100%;
             height: 100%;
@@ -18,6 +23,14 @@
             width: 80%;
             height: 95%;
         }
+        mark.green{
+            background-color: #008800;
+            color: black;
+        }
+        mark.red{
+            background-color: red;
+            color: black;
+        }
     </style>
 </head>
 <body>
@@ -30,7 +43,17 @@
         </td>
         <td>
             <div>
+                <label>enter argument here</label>
+            </div>
+        </td>
+        <td>
+            <div>
                 <label>Parsed code here</label>
+            </div>
+        </td>
+        <td>
+            <div>
+                <p id="diagram"></p>
             </div>
         </td>
     </tr>
@@ -42,6 +65,11 @@
         </td>
         <td>
             <div class="textAreaWrapper">
+                <textarea id="enterArguments" title="enter arguments here"></textarea>
+            </div>
+        </td>
+        <td>
+            <div class="textAreaWrapper" id="parsedCodeOut">
                 <textarea id="parsedCode" title="Parse code"></textarea>
             </div>
         </td>
@@ -55,15 +83,6 @@
         <td>
         </td>
     </tr>
-    <table id = "parseTable", style="width:100%">
-        <tr>
-            <th> Line</th>
-            <th> Type</th>
-            <th> Name</th>
-            <th> Condition</th>
-            <th> Value</th>
-        </tr>
-    </table>
 </table>
 
 <script src="dist/bundle.js"></script>
